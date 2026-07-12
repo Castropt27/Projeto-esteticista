@@ -1,0 +1,13 @@
+:root {
+  --azul-principal: #14578B;
+  --azul-claro: #6690AF;
+  --azul-muito-claro: #9EB6C7;
+  --roxo-moldura: #845079;
+  --roxo-intermedio: #906286;
+  --fundo: #F9F2E7;
+  --branco: #FFFFFF;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Poppins', sans-serif; background-color: var(--fundo); color: var(--azul-principal); overflow-x: hidden; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }

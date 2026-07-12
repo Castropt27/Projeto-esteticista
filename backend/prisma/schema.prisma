@@ -1,0 +1,184 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  CLIENTE
+  FUNCIONARIO
+}
+
+enum EstadoMarcacao {
+  PENDENTE
+  CONFIRMADA
+  CANCELADA
+  CONCLUIDA
+}
+
+enum EstadoCarrinho {
+  ABERTO
+  FINALIZADO
+  CANCELADO
+}
+
+enum EstadoEncomenda {
+  PENDENTE
+  PAGA
+  ENVIADA
+  ENTREGUE
+  CANCELADA
+}
+
+enum MetodoPagamento {
+  MBWAY
+  MULTIBANCO
+  CARTAO
+  DINHEIRO
+  TRANSFERENCIA
+}
+
+enum EstadoPagamento {
+  PENDENTE
+  PAGO
+  FALHADO
+  REEMBOLSADO
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  nome          String
+  email         String       @unique
+  password_hash String
+  telefone      String?
+  role          Role         @default(CLIENTE)
+  ativo         Boolean      @default(true)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  // Relações
+  marcacoesCliente     Marcacao[]  @relation("ClienteMarcacoes")
+  marcacoesFuncionario Marcacao[]  @relation("FuncionarioMarcacoes")
+  carrinhos            Carrinho[]
+  encomendas           Encomenda[]
+  pagamentos           Pagamento[]
+}
+
+model Servico {
+  id              Int        @id @default(autoincrement())
+  nome            String
+  tipo            String
+  descricao       String?
+  imagem          String?
+  preco           Float
+  duracao_minutos Int
+  ativo           Boolean    @default(true)
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+
+  marcacoes       Marcacao[]
+}
+
+model Produto {
+  id            Int             @id @default(autoincrement())
+  nome          String
+  tipo          String
+  descricao     String?
+  imagem        String?
+  preco         Float
+  stock         Int             @default(0)
+  ativo         Boolean         @default(true)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  carrinhoItens CarrinhoItem[]
+  encomendaItens EncomendaItem[]
+}
+
+model Marcacao {
+  id             Int            @id @default(autoincrement())
+  cliente_id     Int
+  funcionario_id Int
+  servico_id     Int
+  data           DateTime
+  hora_inicio    DateTime
+  hora_fim       DateTime
+  estado         EstadoMarcacao @default(PENDENTE)
+  preco_total    Float
+  observacoes    String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  cliente        User           @relation("ClienteMarcacoes", fields: [cliente_id], references: [id])
+  funcionario    User           @relation("FuncionarioMarcacoes", fields: [funcionario_id], references: [id])
+  servico        Servico        @relation(fields: [servico_id], references: [id])
+  pagamentos     Pagamento[]
+}
+
+model Carrinho {
+  id         Int            @id @default(autoincrement())
+  cliente_id Int
+  estado     EstadoCarrinho @default(ABERTO)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  cliente    User           @relation(fields: [cliente_id], references: [id])
+  itens      CarrinhoItem[]
+}
+
+model CarrinhoItem {
+  id             Int      @id @default(autoincrement())
+  carrinho_id    Int
+  produto_id     Int
+  quantidade     Int
+  preco_unitario Float
+
+  carrinho       Carrinho @relation(fields: [carrinho_id], references: [id], onDelete: Cascade)
+  produto        Produto  @relation(fields: [produto_id], references: [id])
+}
+
+model Encomenda {
+  id             Int             @id @default(autoincrement())
+  cliente_id     Int
+  valor_total    Float
+  estado         EstadoEncomenda @default(PENDENTE)
+  morada_entrega String
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+
+  cliente        User            @relation(fields: [cliente_id], references: [id])
+  itens          EncomendaItem[]
+  pagamentos     Pagamento[]
+}
+
+model EncomendaItem {
+  id           Int       @id @default(autoincrement())
+  encomenda_id Int
+  produto_id   Int
+  quantidade   Int
+  preco_unitario Float
+
+  encomenda    Encomenda @relation(fields: [encomenda_id], references: [id], onDelete: Cascade)
+  produto      Produto   @relation(fields: [produto_id], references: [id])
+}
+
+model Pagamento {
+  id             Int             @id @default(autoincrement())
+  cliente_id     Int
+  marcacao_id    Int?
+  encomenda_id   Int?
+  valor          Float
+  metodo         MetodoPagamento
+  estado         EstadoPagamento @default(PENDENTE)
+  data_pagamento DateTime?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+
+  cliente        User            @relation(fields: [cliente_id], references: [id])
+  marcacao       Marcacao?       @relation(fields: [marcacao_id], references: [id])
+  encomenda      Encomenda?      @relation(fields: [encomenda_id], references: [id])
+}
