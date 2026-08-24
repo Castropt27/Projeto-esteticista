@@ -75,40 +75,43 @@ export function AuthForm({ mode }: Props) {
           {isRegister ? (
             <label style={styles.field}>
               Nome
-              <input name="nome" autoComplete="off" value={formData.nome} onChange={handleChange} style={styles.input} placeholder="O teu nome" />
+              <input name="nome" autoComplete="name" value={formData.nome} onChange={handleChange} style={styles.input} placeholder="O teu nome" required />
             </label>
           ) : null}
 
           <label style={styles.field}>
             Email
             <input
-              name={isRegister ? 'register-email' : 'login-email'}
+              name="email"
               type="email"
               autoComplete={isRegister ? 'new-email' : 'email'}
               value={formData.email}
               onChange={handleChange}
               style={styles.input}
               placeholder="teu@email.com"
+              required
             />
           </label>
 
           {isRegister ? (
             <label style={styles.field}>
               Telefone
-              <input name="telefone" autoComplete="off" value={formData.telefone} onChange={handleChange} style={styles.input} placeholder="Opcional" />
+              <input name="telefone" autoComplete="tel" value={formData.telefone} onChange={handleChange} style={styles.input} placeholder="Opcional" />
             </label>
           ) : null}
 
           <label style={styles.field}>
             Password
             <input
-              name={isRegister ? 'register-password' : 'login-password'}
+              name="password"
               type="password"
               autoComplete={isRegister ? 'new-password' : 'current-password'}
               value={formData.password}
               onChange={handleChange}
               style={styles.input}
               placeholder="••••••••"
+              required
+              minLength={8}
             />
           </label>
 

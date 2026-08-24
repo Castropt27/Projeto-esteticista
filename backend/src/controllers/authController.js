@@ -2,12 +2,27 @@ const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const normalizarEmail = (email) => email?.trim().toLowerCase();
+
+const dadosPublicosUtilizador = (user) => ({
+    id: user.id,
+    nome: user.nome,
+    email: user.email,
+    telefone: user.telefone,
+    role: user.role,
+});
+
 exports.registar = async (req, res, next) => {
     try {
-        const { nome, email, password, telefone } = req.body;
+        const { nome, password, telefone } = req.body;
+        const email = normalizarEmail(req.body.email);
 
-        if (!nome || !email || !password) {
+        if (!nome?.trim() || !email || !password) {
             return res.status(400).json({ success: false, error: 'Preencha os campos obrigatórios.' });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({ success: false, error: 'A password deve ter pelo menos 8 caracteres.' });
         }
 
         const utilizadorExiste = await prisma.user.findUnique({ where: { email } });
@@ -20,7 +35,7 @@ exports.registar = async (req, res, next) => {
         const password_hash = await bcrypt.hash(password, salt);
 
         const novoUtilizador = await prisma.user.create({
-            data: { nome, email, password_hash, telefone, role: 'CLIENTE' }
+            data: { nome: nome.trim(), email, password_hash, telefone: telefone?.trim() || null, role: 'CLIENTE' }
         });
 
         // Gerar o token de autenticação
@@ -29,13 +44,7 @@ exports.registar = async (req, res, next) => {
         return res.status(201).json({
             success: true,
             token,
-            user: {
-                id: novoUtilizador.id,
-                nome: novoUtilizador.nome,
-                email: novoUtilizador.email,
-                telefone: novoUtilizador.telefone,
-                role: novoUtilizador.role,
-            },
+            user: dadosPublicosUtilizador(novoUtilizador),
         });
     } catch (error) {
         next(error);
@@ -44,7 +53,8 @@ exports.registar = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { password } = req.body;
+        const email = normalizarEmail(req.body.email);
 
         if (!email || !password) {
             return res.status(400).json({ success: false, error: 'E-mail e password são necessários.' });
@@ -64,13 +74,7 @@ exports.login = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             token,
-            user: {
-                id: user.id,
-                nome: user.nome,
-                email: user.email,
-                telefone: user.telefone,
-                role: user.role,
-            },
+            user: dadosPublicosUtilizador(user),
         });
     } catch (error) {
         next(error);
@@ -99,6 +103,33 @@ exports.me = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ success: false, error: 'Utilizador não encontrado.' });
         }
+
+        return res.status(200).json({ success: true, user });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.atualizarPerfil = async (req, res, next) => {
+    try {
+        const nome = req.body.nome?.trim();
+        const telefone = req.body.telefone?.trim();
+
+        if (!nome) {
+            return res.status(400).json({ success: false, error: 'O nome é obrigatório.' });
+        }
+
+        const user = await prisma.user.update({
+            where: { id: req.user.id },
+            data: { nome, telefone: telefone || null },
+            select: {
+                id: true,
+                nome: true,
+                email: true,
+                telefone: true,
+                role: true,
+            },
+        });
 
         return res.status(200).json({ success: true, user });
     } catch (error) {

@@ -50,7 +50,7 @@ type ProfileDetails = {
 };
 
 export function ProfilePage() {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const [profile, setProfile] = useState<ProfileDetails | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -122,9 +122,7 @@ export function ProfilePage() {
   };
 
   const handleLogout = () => {
-    // TODO: liga isto à função de logout real do teu AuthContext, por
-    // exemplo: const { logout } = useAuth(); logout();
-    window.location.href = '/';
+    logout();
   };
 
   const proximasMarcacoes: Marcacao[] = [
